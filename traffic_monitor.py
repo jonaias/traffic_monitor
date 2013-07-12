@@ -39,13 +39,16 @@ from threading import Timer
 
 cnt = Counter()
 
-
 def print_status():
-    print cnt.most_common(5)
+    most_traffic = cnt.most_common(5)
+    if most_traffic:
+        print 'MAC              \tBytes/s'
+        for entry in most_traffic:
+            #     '00:00:00:00:00:00      NNNNN' 
+            print entry[0], '\t', entry[1]
     cnt.clear()
     t = Timer(0.5, print_status)
     t.start()
-    
 
 def sniff_callback(pkt):
     cnt[pkt.addr1]+=pkt.len
