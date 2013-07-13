@@ -36,26 +36,35 @@
 from scapy.all import *
 from collections import Counter
 from threading import Timer
+import sys
 
 cnt = Counter()
 
 def print_status():
     most_traffic = cnt.most_common(5)
     if most_traffic:
-        print 'MAC              \tBytes/s'
+        sys.stderr.write("\x1b[2J\x1b[H")
+        print 'MAC              \tKB/s'
         for entry in most_traffic:
             #     '00:00:00:00:00:00      NNNNN' 
-            print entry[0], '\t', entry[1]
+            print entry[0], '\t', "{0:.2f}".format(entry[1]/1024.0)
     cnt.clear()
-    t = Timer(0.5, print_status)
+    t = Timer(1, print_status)
     t.start()
 
 def sniff_callback(pkt):
-    cnt[pkt.addr1]+=pkt.len
+    src_mac = ''
+    if pkt.haslayer(Ether):
+        src_mac = pkt[Ether].src
+    else:
+        src_mac = pkt.addr1
+    cnt[src_mac]+=len(pkt)
+
 
 def main():
     print_status()
-    sniff(prn=sniff_callback, offline="test.pcap")
+    #sniff(offline="test.pcap",prn=sniff_callback,store=0)
+    sniff(iface="mon0",prn=sniff_callback,store=0)
     return 0
 
 if __name__ == '__main__':
